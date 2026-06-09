@@ -87,15 +87,20 @@ def save_seen(seen):
 
 
 def send_telegram(text):
-    requests.post(
+    r = requests.post(
         f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage",
         json={"chat_id": TG_CHAT_ID, "text": text},
         timeout=15,
     )
+    # 發送失敗就炸錯，讓 Actions 顯示紅色失敗（不再假裝 success）
+    if not r.ok:
+        raise RuntimeError(f"Telegram 發送失敗 {r.status_code}: {r.text}")
 
 
 def send_discord(text):
-    requests.post(DISCORD_WEBHOOK, json={"content": text}, timeout=15)
+    r = requests.post(DISCORD_WEBHOOK, json={"content": text}, timeout=15)
+    if not r.ok:
+        raise RuntimeError(f"Discord 發送失敗 {r.status_code}: {r.text}")
 
 
 def main():
