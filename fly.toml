@@ -1,0 +1,18 @@
+# Fly.io 常駐 worker 設定。部署：`fly launch --no-deploy`（產生 app）→ 設 secrets → `fly deploy`。
+# app 名稱請改成你自己的（fly 要求全域唯一）。
+app = "trump-truth-monitor"
+primary_region = "nrt"   # 東京；可改近你的區域
+
+# 這是「一直跑的背景程式」，不是 web service：不開 port、不要因閒置縮到 0。
+[build]
+
+[processes]
+  app = "python monitor.py"
+
+# 單一機器、不自動停。Fly 免費額度足夠跑一台 shared-cpu-1x 256MB。
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+
+[experimental]
+  auto_rollback = true

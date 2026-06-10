@@ -1,0 +1,13 @@
+# 統一換行：repo 內一律 LF（避免 Windows clone 後變 CRLF，systemd/Dockerfile/shell 才乾淨）
+* text=auto eol=lf
+
+# 明確鎖 LF 的關鍵檔（部署到 Linux 用）
+*.py            text eol=lf
+*.service       text eol=lf
+*.toml          text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.md            text eol=lf
+*.json          text eol=lf
+*.txt           text eol=lf
+Dockerfile      text eol=lf

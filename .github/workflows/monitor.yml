@@ -1,11 +1,13 @@
-name: Truth Social Monitor
+name: Truth Social Monitor (manual test only)
 
+# ⚠️ 排程已移除：GitHub Actions 的 `schedule:` cron 是 best-effort，會被延遲數小時、
+#    堆積觸發被合併，所以「每 5 分」會跑成「每幾小時、一次吐一批」。
+#    正式 24/7 監控改用常駐 worker（見 SELF_HOSTING.md）。
+#    這支只留 workflow_dispatch，當「手動戳一次測試」用（RUN_ONCE=1 → 只跑一輪不進迴圈）。
 on:
-  schedule:
-    - cron: "*/5 * * * *"   # 每 5 分鐘跑一次（GitHub 最短就是 5 分）
-  workflow_dispatch:         # 也允許手動按按鈕測試
+  workflow_dispatch:
 
-# 允許 workflow 把 seen.json 推回 repo
+# 允許 workflow 把 seen.json 推回 repo（手動測試時保留去重狀態）
 permissions:
   contents: write
 
@@ -21,8 +23,9 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - name: 跑監控程式
+      - name: 跑監控程式（單次）
         env:
+          RUN_ONCE: "1"          # 只跑一輪就結束，不進常駐迴圈
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}

@@ -1,0 +1,25 @@
+# systemd unit：給 Oracle Cloud Always Free VM（或任何 Linux 常駐主機）用。
+# 開機自啟 + 崩潰自動重起。安裝步驟見 SELF_HOSTING.md。
+#
+#   sudo cp deploy/trump-monitor.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now trump-monitor
+#
+[Unit]
+Description=Trump Truth Social Monitor (always-on worker)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# 改成你 clone repo 的實際路徑與執行使用者
+User=ubuntu
+WorkingDirectory=/home/ubuntu/TrumpTrueSocial_Bot
+# 密碼放這個檔（chmod 600），不要寫進 git。格式見 SELF_HOSTING.md。
+EnvironmentFile=/home/ubuntu/TrumpTrueSocial_Bot/.env
+ExecStart=/home/ubuntu/TrumpTrueSocial_Bot/.venv/bin/python monitor.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
