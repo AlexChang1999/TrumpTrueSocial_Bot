@@ -44,8 +44,10 @@ python monitor.py
 |------|------|
 | `monitor.py` | 主程式：常駐迴圈，抓貼文 → 去重 → 發通知（`RUN_ONCE=1` 可單次） |
 | `requirements.txt` | Python 套件 |
-| `SELF_HOSTING.md` | 24/7 常駐部署指南（Oracle VM / Fly.io） |
-| `Dockerfile` / `fly.toml` | Fly.io 容器化部署 |
-| `deploy/trump-monitor.service` | Oracle/Linux 用的 systemd unit |
-| `.github/workflows/monitor.yml` | 只剩手動測試（排程已停用） |
+| `docs/PING_SETUP.md` | **正式運作（路 A）**：cron-job.org 戳 workflow_dispatch 設定 |
+| `docs/OPERATIONS.md` | 維運備註（PAT 過期、告警、換電腦） |
+| `SELF_HOSTING.md` | 路 B：24/7 常駐 VM 部署（Oracle / Fly.io） |
+| `Dockerfile` / `fly.toml` | 路 B：Fly.io 容器化部署 |
+| `deploy/trump-monitor.service` | 路 B：Oracle/Linux systemd unit |
+| `.github/workflows/monitor.yml` | 正式觸發路徑（由 cron-job.org 每分鐘 dispatch） |
 | `seen.json` | 看過的貼文 ID（自動更新） |
