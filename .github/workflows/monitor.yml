@@ -7,6 +7,13 @@ name: Truth Social Monitor (manual test only)
 on:
   workflow_dispatch:
 
+# 防重疊：同時只跑一個。1 分鐘間隔下，若上一個還沒跑完，新觸發會排隊（不取消進行中的，
+# 避免發到一半被砍 → 漏發/重發/seen.json 沒 push）。GitHub 每個 group 最多保留 1 個 pending，
+# 所以最多「1 個跑 + 1 個等」，不會塞爆。
+concurrency:
+  group: truth-social-monitor
+  cancel-in-progress: false
+
 # 允許 workflow 把 seen.json 推回 repo（手動測試時保留去重狀態）
 permissions:
   contents: write
