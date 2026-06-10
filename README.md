@@ -21,8 +21,10 @@
    - `TELEGRAM_CHAT_ID` — Telegram user id（@userinfobot 拿）
    - `DISCORD_WEBHOOK` — Discord 頻道 Webhook URL
 2. 去 Telegram **對你的 bot 按 Start**（否則 bot 不能私訊你）。
-3. 依 [`SELF_HOSTING.md`](SELF_HOSTING.md) 部署常駐 worker（Oracle Always Free VM 或 Fly.io）。
-4. 換電腦／換主機時，照 `SELF_HOSTING.md` 重做一次即可。
+3. 選一條免費部署路：
+   - **路 A（推薦：免費、不綁卡）**：[`docs/PING_SETUP.md`](docs/PING_SETUP.md) — cron-job.org 每 5 分戳 GitHub Actions（`workflow_dispatch` 不被節流）。不用主機、不用信用卡。
+   - **路 B（真常駐，要綁卡驗證）**：[`SELF_HOSTING.md`](SELF_HOSTING.md) — Oracle Always Free VM 跑常駐 worker。
+4. 換電腦免重設（兩條都在雲端跑）；路 A 只要顧好 PAT 不過期。
 
 > `.github/workflows/monitor.yml` 已停用排程，只留 **手動 Run workflow**（單次）當測試用。
 
