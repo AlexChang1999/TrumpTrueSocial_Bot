@@ -1,9 +1,10 @@
-name: Truth Social Monitor (manual test only)
+name: Truth Social Monitor
 
-# ⚠️ 排程已移除：GitHub Actions 的 `schedule:` cron 是 best-effort，會被延遲數小時、
-#    堆積觸發被合併，所以「每 5 分」會跑成「每幾小時、一次吐一批」。
-#    正式 24/7 監控改用常駐 worker（見 SELF_HOSTING.md）。
-#    這支只留 workflow_dispatch，當「手動戳一次測試」用（RUN_ONCE=1 → 只跑一輪不進迴圈）。
+# 正式 24/7 監控就是這支（路 A，見 docs/PING_SETUP.md）：
+#  - 不用 `schedule:` cron —— 它是 best-effort，會被延遲數小時、堆積觸發被合併，
+#    「每 5 分」會跑成「每幾小時、一次吐一批」。
+#  - 改由 cron-job.org 每 1 分鐘打 GitHub API 觸發 `workflow_dispatch`（不被節流）。
+#  - 每次跑 RUN_ONCE=1（只跑一輪不進迴圈）；concurrency 防重疊。
 on:
   workflow_dispatch:
 
@@ -22,9 +23,9 @@ jobs:
   monitor:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
