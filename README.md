@@ -12,6 +12,7 @@
 1. 常駐迴圈：每 `INTERVAL_SEC`（預設 300＝5 分）檢查一次。
 2. 先試 Truth Social 官方 API；被 Cloudflare 擋就退回 `trumpstruth.org` RSS（每輪抓最新 `FETCH_LIMIT`＝20 篇）。
 3. 用 `seen.json` 記住看過的貼文 ID（常駐進程也保留在記憶體，跨輪去重），只對新貼文發通知。
+   `seen.json` 是**執行期狀態、不進 git**（見 `.gitignore`），留在 VM 磁碟跨重啟保存。
 4. 冷啟動防洗頻：`seen.json` 空時第一輪只記錄不發，避免重啟後整批重發。
 
 ## 設定步驟
@@ -21,12 +22,13 @@
    - `TELEGRAM_CHAT_ID` — Telegram user id（@userinfobot 拿）
    - `DISCORD_WEBHOOK` — Discord 頻道 Webhook URL
 2. 去 Telegram **對你的 bot 按 Start**（否則 bot 不能私訊你）。
-3. 選一條免費部署路：
-   - **路 A（推薦：免費、不綁卡）**：[`docs/PING_SETUP.md`](docs/PING_SETUP.md) — cron-job.org 每 5 分戳 GitHub Actions（`workflow_dispatch` 不被節流）。不用主機、不用信用卡。
-   - **路 B（真常駐，要綁卡驗證）**：[`SELF_HOSTING.md`](SELF_HOSTING.md) — Oracle Always Free VM 跑常駐 worker。
-4. 換電腦免重設（兩條都在雲端跑）；路 A 只要顧好 PAT 不過期。
+3. 部署：Oracle Always Free VM 跑常駐 worker，見 [`SELF_HOSTING.md`](SELF_HOSTING.md)。
 
-> `.github/workflows/monitor.yml` 已停用排程，只留 **手動 Run workflow**（單次）當測試用。
+> **⚠️ 只能跑一個 instance（單一推播者）。** 早期同時有「路 A：GitHub Actions
+> （cron-job.org 戳 `workflow_dispatch`）」與「路 B：VM 常駐 worker」兩條路，兩者各自
+> 維護獨立的 `seen.json`（Actions 推回 git、VM 寫本機磁碟），狀態 split-brain → 同一則
+> 貼文被兩邊各推一次（重複推送）。**已移除 `monitor.yml`、`seen.json` 退出 git 追蹤**，
+> 統一只跑 VM 常駐 worker。若 cron-job.org 還有那支定時任務，請到後台關閉。
 
 ## 本機測試（選用）
 
@@ -44,10 +46,8 @@ python monitor.py
 |------|------|
 | `monitor.py` | 主程式：常駐迴圈，抓貼文 → 去重 → 發通知（`RUN_ONCE=1` 可單次） |
 | `requirements.txt` | Python 套件 |
-| `docs/PING_SETUP.md` | **正式運作（路 A）**：cron-job.org 戳 workflow_dispatch 設定 |
-| `docs/OPERATIONS.md` | 維運備註（PAT 過期、告警、換電腦） |
-| `SELF_HOSTING.md` | 路 B：24/7 常駐 VM 部署（Oracle / Fly.io） |
-| `Dockerfile` / `fly.toml` | 路 B：Fly.io 容器化部署 |
-| `deploy/trump-monitor.service` | 路 B：Oracle/Linux systemd unit |
-| `.github/workflows/monitor.yml` | 正式觸發路徑（由 cron-job.org 每分鐘 dispatch） |
-| `seen.json` | 看過的貼文 ID（自動更新） |
+| `docs/OPERATIONS.md` | 維運備註（告警、換電腦） |
+| `SELF_HOSTING.md` | **正式運作**：24/7 常駐 VM 部署（Oracle / Fly.io） |
+| `Dockerfile` / `fly.toml` | Fly.io 容器化部署 |
+| `deploy/trump-monitor.service` | Oracle/Linux systemd unit |
+| `seen.json` | 看過的貼文 ID（執行期狀態，不進 git；自動更新於 VM 磁碟） |

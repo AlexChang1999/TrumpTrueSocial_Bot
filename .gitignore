@@ -3,3 +3,7 @@ __pycache__/
 .env
 .venv/
 venv/
+
+# 去重狀態：執行期資料，不進版本控制。
+# 進 git 會導致每次 git pull 把 VM 上的 seen 蓋回舊版 → 最近推過的貼文被當新文重推。
+seen.json

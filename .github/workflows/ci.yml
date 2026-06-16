@@ -1,0 +1,54 @@
+# ============================================================
+# CI（部署前驗證關卡）+ CD（自動部署常駐 VM worker）
+# ============================================================
+# 取代已移除的 monitor.yml（那是舊的「路 A」執行路徑，會與 VM 常駐 worker 雙推播洗版）。
+# 這支只做「驗證 + 部署」，不負責跑監控本身——監控是 VM 上的 trump-monitor 常駐服務。
+
+name: CI / CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # ---------- 部署前驗證關卡 ----------
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: 安裝依賴
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff
+
+      - name: 錯誤級 lint（只抓語法錯 / 未定義名稱）
+        run: ruff check --select=E9,F63,F7,F82 monitor.py
+
+      - name: 語法編譯檢查
+        # 不用 import：monitor.py 頂層讀 os.environ["TELEGRAM_TOKEN"]，CI 沒金鑰 import 會 KeyError。
+        # py_compile 只驗語法、不執行模組頂層，剛好擋掉「推上去才發現語法錯」。
+        run: python -m py_compile monitor.py
+
+  # ---------- 自動部署到 VM ----------
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH 進 VM 跑部署腳本（失敗自動回滾）
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/TrumpTrueSocial_Bot
+            bash scripts/deploy.sh main

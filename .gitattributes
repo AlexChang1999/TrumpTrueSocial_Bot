@@ -3,6 +3,7 @@
 
 # 明確鎖 LF 的關鍵檔（部署到 Linux 用）
 *.py            text eol=lf
+*.sh            text eol=lf
 *.service       text eol=lf
 *.toml          text eol=lf
 *.yml           text eol=lf

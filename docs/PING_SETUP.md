@@ -1,4 +1,9 @@
-# 路 A：免費、不綁卡 — cron-job.org 戳 GitHub Actions
+> ⚠️ **已棄用（DEPRECATED）。** 此路與 VM 常駐 worker 並跑會造成 split-brain `seen.json`
+> → 重複推送。`monitor.yml` 已移除、`seen.json` 已退出 git。正式運作改走
+> [`../SELF_HOSTING.md`](../SELF_HOSTING.md) 的 VM 常駐 worker。本文僅留作歷史。
+> 若 cron-job.org 仍有那支定時任務，請到後台關閉。
+
+# 路 A：免費、不綁卡 — cron-job.org 戳 GitHub Actions（已棄用）
 
 完全不用雲端主機、不用信用卡。靠兩個免費東西：
 
