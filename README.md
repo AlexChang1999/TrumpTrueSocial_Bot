@@ -1,53 +1,69 @@
-# TrumpTrueSocial_Bot
+# 📡 TrumpTrueSocial_Bot — Truth Social 監控通知機器人
 
-監控川普 Truth Social 新貼文，發通知到 **Telegram** + **Discord**。
-跑成**免費雲端常駐 worker**，每 5 分鐘穩定檢查一次（24/7、不綁任何一台電腦）。
+<div align="center">
 
-> 早期版本靠 GitHub Actions `cron` 每 5 分鐘跑，但 GH 排程會被延遲數小時、堆積觸發被合併，
-> 實際變成「每幾小時、一次吐一批」。改成常駐迴圈後才有真正的 5 分鐘節奏。
-> 部署步驟見 [`SELF_HOSTING.md`](SELF_HOSTING.md)。
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Telegram](https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)
+![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)
+![Oracle Cloud](https://img.shields.io/badge/Oracle%20Cloud-F80000?style=for-the-badge&logo=oracle&logoColor=white)
+
+</div>
+
+## 專案簡介
+
+24/7 常駐雲端 worker，監控 Truth Social 上的新貼文，並即時推播通知到 Telegram 與 Discord，每 5 分鐘穩定檢查一次，不需綁定任何一台個人電腦。早期版本採用 GitHub Actions cron 排程，但因排程延遲、觸發堆積等限制，改為常駐迴圈架構後才達成穩定的即時性。
+
+## 技術棧
+
+| 類別 | 技術 |
+|---|---|
+| 語言 | Python |
+| 資料來源 | Truth Social 官方 API（主）→ trumpstruth.org RSS（備援，遇 Cloudflare 阻擋自動切換） |
+| 通知 | Telegram Bot API、Discord Webhook |
+| 部署 | Oracle Cloud Always Free VM（systemd 常駐服務）/ Fly.io（容器化備選） |
+| 狀態管理 | seen.json 記錄已推播貼文 ID，避免重複通知 |
 
 ## 運作原理
 
-1. 常駐迴圈：每 `INTERVAL_SEC`（預設 300＝5 分）檢查一次。
-2. 先試 Truth Social 官方 API；被 Cloudflare 擋就退回 `trumpstruth.org` RSS（每輪抓最新 `FETCH_LIMIT`＝20 篇）。
-3. 用 `seen.json` 記住看過的貼文 ID（常駐進程也保留在記憶體，跨輪去重），只對新貼文發通知。
-   `seen.json` 是**執行期狀態、不進 git**（見 `.gitignore`），留在 VM 磁碟跨重啟保存。
-4. 冷啟動防洗頻：`seen.json` 空時第一輪只記錄不發，避免重啟後整批重發。
+• 常駐迴圈每 INTERVAL_SEC（預設 300 秒）檢查一次新貼文
+• 冷啟動保護：首次啟動時只記錄不推播，避免重啟後整批重發
+• 單一 instance 限制：確保只有一條推播路徑，避免重複通知
 
-## 設定步驟
+## 安裝與設定
 
-1. 準備 3 把密碼（之後設成雲端 host 的環境變數，**不寫進 git**）：
-   - `TELEGRAM_TOKEN` — Telegram Bot Token（@BotFather 拿）
-   - `TELEGRAM_CHAT_ID` — Telegram user id（@userinfobot 拿）
-   - `DISCORD_WEBHOOK` — Discord 頻道 Webhook URL
-2. 去 Telegram **對你的 bot 按 Start**（否則 bot 不能私訊你）。
-3. 部署：Oracle Always Free VM 跑常駐 worker，見 [`SELF_HOSTING.md`](SELF_HOSTING.md)。
+**1. 準備憑證**（設為環境變數，不寫入 Git）
 
-> **⚠️ 只能跑一個 instance（單一推播者）。** 早期同時有「路 A：GitHub Actions
-> （cron-job.org 戳 `workflow_dispatch`）」與「路 B：VM 常駐 worker」兩條路，兩者各自
-> 維護獨立的 `seen.json`（Actions 推回 git、VM 寫本機磁碟），狀態 split-brain → 同一則
-> 貼文被兩邊各推一次（重複推送）。**已移除 `monitor.yml`、`seen.json` 退出 git 追蹤**，
-> 統一只跑 VM 常駐 worker。若 cron-job.org 還有那支定時任務，請到後台關閉。
+TELEGRAM_TOKEN：Telegram Bot Token（透過 @BotFather 取得）
+TELEGRAM_CHAT_ID：Telegram 使用者 ID（透過 @userinfobot 取得）
+DISCORD_WEBHOOK：Discord 頻道 Webhook URL
 
-## 本機測試（選用）
+**2. 本機測試**
 
-```bash
+```
 pip install -r requirements.txt
-
-# Windows PowerShell 設環境變數後執行
-$env:TELEGRAM_TOKEN="..."; $env:TELEGRAM_CHAT_ID="..."; $env:DISCORD_WEBHOOK="..."
 python monitor.py
 ```
 
-## 檔案說明
+**3. 正式部署**
 
-| 檔案 | 作用 |
-|------|------|
-| `monitor.py` | 主程式：常駐迴圈，抓貼文 → 去重 → 發通知（`RUN_ONCE=1` 可單次） |
-| `requirements.txt` | Python 套件 |
-| `docs/OPERATIONS.md` | 維運備註（告警、換電腦） |
-| `SELF_HOSTING.md` | **正式運作**：24/7 常駐 VM 部署（Oracle / Fly.io） |
-| `Dockerfile` / `fly.toml` | Fly.io 容器化部署 |
-| `deploy/trump-monitor.service` | Oracle/Linux systemd unit |
-| `seen.json` | 看過的貼文 ID（執行期狀態，不進 git；自動更新於 VM 磁碟） |
+詳細的 24/7 常駐部署步驟（Oracle Cloud / Fly.io）請參考 SELF_HOSTING.md。
+
+## 使用方式
+
+啟動後程式會持續於背景執行，偵測到新貼文時自動發送通知，無需手動觸發。
+
+## 專案結構（節錄）
+
+```
+TrumpTrueSocial_Bot/
+├── monitor.py                   主程式：常駐迴圈、抓貼文、去重、發通知
+├── requirements.txt
+├── SELF_HOSTING.md              正式部署指南
+├── Dockerfile / fly.toml        Fly.io 容器化部署
+├── deploy/trump-monitor.service systemd unit
+└── docs/OPERATIONS.md           維運備註
+```
+
+## 注意事項
+
+seen.json 為執行期狀態，不進版本控制，保存在部署主機磁碟中，跨重啟維持已讀貼文紀錄。
